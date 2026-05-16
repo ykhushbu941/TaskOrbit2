@@ -4,8 +4,12 @@ import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import Dashboard from "./pages/Dashboard";
+import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
+import MyTasks from "./pages/MyTasks";
+import Analytics from "./pages/Analytics";
 import AdminPanel from "./pages/AdminPanel";
+import Settings from "./pages/Settings";
 import Layout from "./components/Layout";
 
 function ProtectedRoute({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) {
@@ -31,14 +35,34 @@ export default function App() {
               <Dashboard />
             </ProtectedRoute>
           } />
+          <Route path="/my-tasks" element={
+            <ProtectedRoute>
+              <MyTasks />
+            </ProtectedRoute>
+          } />
+          <Route path="/projects" element={
+            <ProtectedRoute>
+              <Projects />
+            </ProtectedRoute>
+          } />
           <Route path="/projects/:id" element={
             <ProtectedRoute>
               <ProjectDetail />
             </ProtectedRoute>
           } />
+          <Route path="/analytics" element={
+            <ProtectedRoute>
+              <Analytics />
+            </ProtectedRoute>
+          } />
           <Route path="/admin" element={
             <ProtectedRoute adminOnly>
               <AdminPanel />
+            </ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <Settings />
             </ProtectedRoute>
           } />
         </Route>

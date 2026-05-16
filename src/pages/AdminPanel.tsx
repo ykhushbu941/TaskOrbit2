@@ -1,36 +1,15 @@
 import { useState, useEffect } from "react";
-import api from "../lib/api";
 import { motion } from "motion/react";
 import { Users, FolderKanban, Plus, UserPlus, Settings2, Trash2, Mail, Shield, User } from "lucide-react";
 import { cn } from "../lib/utils";
 import { format } from "date-fns";
+import { useOrbitStore } from "../store/useOrbitStore";
+import { MOCK_USERS } from "../data/mockData";
 
 export default function AdminPanel() {
-  const [users, setUsers] = useState<any[]>([]);
-  const [projects, setProjects] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { projects, addProject } = useOrbitStore();
+  const [users] = useState(MOCK_USERS);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [uRes, pRes] = await Promise.all([
-        api.get("/users"),
-        api.get("/projects")
-      ]);
-      setUsers(uRes.data);
-      setProjects(pRes.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) return <div className="flex items-center justify-center h-full"><div className="w-8 h-8 border-2 border-orbit-accent border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
     <div className="space-y-8">
@@ -66,7 +45,7 @@ export default function AdminPanel() {
               <div key={u.id} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between group hover:bg-white/5 transition-all">
                 <div className="flex items-center gap-4">
                    <div className="w-12 h-12 rounded-full bg-orbit-purple/20 flex items-center justify-center text-orbit-purple font-bold border border-orbit-purple/30">
-                      {u.name[0]}
+                      {u.avatar || u.name[0]}
                    </div>
                    <div>
                       <div className="flex items-center gap-2">
@@ -108,13 +87,15 @@ export default function AdminPanel() {
                   </div>
                   <div className="flex justify-between items-center mt-3">
                      <div className="flex -space-x-2">
-                        {p.users?.slice(0, 3).map((u: any) => (
-                          <div key={u.id} className="w-6 h-6 rounded-full border border-orbit-bg bg-orbit-purple text-[8px] flex items-center justify-center text-white font-bold">
-                            {u.name[0]}
-                          </div>
-                        ))}
+                        {p.members?.slice(0, 3).map((uid: any) => {
+                          const u = MOCK_USERS.find(user => user.id === uid);
+                          return (
+                            <div key={uid} className="w-6 h-6 rounded-full border border-orbit-bg bg-orbit-purple text-[8px] flex items-center justify-center text-white font-bold">
+                              {u?.avatar || u?.name[0]}
+                            </div>
+                          );
+                        })}
                      </div>
-                     <span className="text-[10px] text-slate-500">{p.tasks.length} Tasks</span>
                   </div>
                 </div>
               ))}
@@ -136,14 +117,14 @@ export default function AdminPanel() {
                 const formData = new FormData(e.currentTarget);
                 const selectedMembers = Array.from(formData.getAll("members") as string[]);
                 const data = {
-                  name: formData.get("name"),
-                  description: formData.get("description"),
-                  color: formData.get("color"),
-                  deadline: formData.get("deadline"),
+                  name: formData.get("name") as string,
+                  description: formData.get("description") as string,
+                  color: formData.get("color") as string,
+                  deadline: formData.get("deadline") as string,
                   members: selectedMembers,
+                  status: "Active"
                 };
-                await api.post("/projects", data);
-                fetchData();
+                addProject(data);
                 setIsProjectModalOpen(false);
               }} className="space-y-4">
                  <div>

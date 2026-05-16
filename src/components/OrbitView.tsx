@@ -1,18 +1,10 @@
 import { motion } from "motion/react";
 import { Zap } from "lucide-react";
 import { cn } from "../lib/utils";
+import { useOrbitStore } from "../store/useOrbitStore";
 
-interface Project {
-  id: string;
-  name: string;
-  progress: number;
-  tasks: any[];
-  color: string;
-}
-
-export default function OrbitView({ projects }: { projects: Project[] }) {
-  // Center is (0,0) concept in a coordinate plane
-  // We'll map projects to orbits
+export default function OrbitView() {
+  const { projects, tasks } = useOrbitStore();
   
   return (
     <div className="relative w-full h-full flex items-center justify-center">
@@ -24,15 +16,15 @@ export default function OrbitView({ projects }: { projects: Project[] }) {
             rotate: 360 
           }}
           transition={{ 
-            duration: 10, 
+             duration: 20, 
             repeat: Infinity, 
             ease: "linear" 
           }}
-          className="w-16 h-16 rounded-full bg-gradient-to-tr from-orbit-accent to-orbit-purple flex items-center justify-center orbit-glow relative"
+          className="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center orbit-glow-sun relative border-4 border-black"
         >
-          <Zap className="text-white w-8 h-8 fill-white" />
+          <div className="w-6 h-6 border-2 border-white rounded-full" />
           {/* Corona Effect */}
-          <div className="absolute inset-0 rounded-full bg-orbit-accent/40 blur-2xl animate-pulse -z-10" />
+          <div className="absolute inset-0 rounded-full bg-indigo-500/40 blur-2xl animate-pulse -z-10" />
         </motion.div>
       </div>
 
@@ -41,7 +33,7 @@ export default function OrbitView({ projects }: { projects: Project[] }) {
         {/* Constant Rings */}
         {[100, 180, 260, 340].map((radius, i) => (
           <div 
-            key={i} 
+            key={radius} 
             className="absolute border border-white/[0.03] rounded-full" 
             style={{ width: radius * 2, height: radius * 2 }} 
           />
@@ -50,11 +42,12 @@ export default function OrbitView({ projects }: { projects: Project[] }) {
 
       {/* Project Planets */}
       {projects.map((project, index) => {
+        const projectTasks = tasks.filter(t => t.projectId === project.id);
         // Higher progress = closer to center (100 is min radius, 0 is max)
         const radius = 340 - (project.progress / 100) * 240;
         // Workload density (more tasks = slower/heavier orbit or more moons)
-        const duration = 15 + (project.tasks.length * 2);
-        const size = 30 + (project.tasks.length * 2);
+        const duration = 25 + (projectTasks.length * 2);
+        const size = 30 + (projectTasks.length * 2);
         
         return (
           <motion.div
@@ -84,12 +77,12 @@ export default function OrbitView({ projects }: { projects: Project[] }) {
                 <span className="text-[10px] font-bold text-white z-10">{project.progress}%</span>
                 
                 {/* Individual Task Moons */}
-                {project.tasks.slice(0, 5).map((task: any, i: number) => (
+                {projectTasks.slice(0, 5).map((task: any, i: number) => (
                    <motion.div
                       key={task.id}
                       className="absolute w-1 h-1 rounded-full bg-white opacity-60"
                       animate={{ rotate: 360 }}
-                      transition={{ duration: 3 + i, repeat: Infinity, ease: "linear" }}
+                      transition={{ duration: 5 + i, repeat: Infinity, ease: "linear" }}
                       style={{ originY: 10 + i * 2 }}
                    />
                 ))}
@@ -97,7 +90,7 @@ export default function OrbitView({ projects }: { projects: Project[] }) {
 
               {/* Label */}
               <div className="absolute -bottom-10 opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100 flex flex-col items-center whitespace-nowrap z-50">
-                <span className="bg-orbit-card backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-xs font-bold text-white">
+                <span className="bg-[#111] backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[10px] font-bold text-white uppercase tracking-widest">
                   {project.name}
                 </span>
                 <div className="w-0.5 h-3 bg-white/20" />

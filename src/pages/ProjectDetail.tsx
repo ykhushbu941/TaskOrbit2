@@ -1,73 +1,29 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import api from "../lib/api";
 import { motion, AnimatePresence } from "motion/react";
 import { MoreHorizontal, Plus, Clock, AlertTriangle, CheckCircle2, MoreVertical, LayoutGrid, List as ListIcon, Calendar as CalendarIcon, UserPlus, Info, ExternalLink, FolderKanban, TrendingUp } from "lucide-react";
-import { useSocket } from "../hooks/useSocket";
 import { format } from "date-fns";
 import { cn } from "../lib/utils";
 import { useAuthStore } from "../store/useAuthStore";
+import { useOrbitStore } from "../store/useOrbitStore";
+import { MOCK_USERS } from "../data/mockData";
 
 const COLUMNS = ["To Do", "In Progress", "In Review", "Done"];
 
 export default function ProjectDetail() {
   const { id } = useParams();
   const { user } = useAuthStore();
-  const [project, setProject] = useState<any>(null);
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { projects, tasks, updateTaskStatus, addTask } = useOrbitStore();
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   
-  const socket = useSocket(id);
+  const project = projects.find(p => p.id === id);
+  const projectTasks = tasks.filter(t => t.projectId === id);
 
-  useEffect(() => {
-    fetchProject();
-  }, [id]);
+  if (!project) return <div className="flex items-center justify-center h-full"><p className="text-slate-500">Project not found in current sector.</p></div>;
 
-  useEffect(() => {
-    if (!socket) return;
-    
-    socket.on("task:updated", (updatedTask: any) => {
-       setTasks(prev => prev.map(t => t.id === updatedTask.id ? { ...t, ...updatedTask } : t));
-    });
-
-    socket.on("project:progress", ({ progress }: { progress: number }) => {
-       setProject((prev: any) => ({ ...prev, progress }));
-    });
-    
-    return () => {
-      socket.off("task:updated");
-      socket.off("project:progress");
-    };
-  }, [socket]);
-
-  const fetchProject = async () => {
-    try {
-      const { data } = await api.get(`/projects/${id}`);
-      setProject(data);
-      setTasks(data.tasks);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+  const handleUpdateStatus = (taskId: string, newStatus: string) => {
+    updateTaskStatus(taskId, newStatus);
   };
-
-  const updateTaskStatus = async (taskId: string, newStatus: string) => {
-    // --- Optimistic Update ---
-    const originalTasks = [...tasks];
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
-
-    try {
-      await api.patch(`/tasks/${taskId}`, { status: newStatus });
-    } catch (err) {
-      // --- Rollback ---
-      setTasks(originalTasks);
-      alert("Failed to update task status");
-    }
-  };
-
-  if (loading || !project) return <div className="flex items-center justify-center h-full"><div className="w-8 h-8 border-2 border-orbit-accent border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
     <div className="space-y-8">
@@ -93,7 +49,7 @@ export default function ProjectDetail() {
 
           <div className="flex flex-col items-end gap-2 shrink-0">
              <div className="flex -space-x-3 mb-2">
-                {project.users.map((u: any) => (
+                {project.members && MOCK_USERS.filter(u => project.members.includes(u.id)).map((u: any) => (
                   <div key={u.id} className="w-9 h-9 rounded-full border-2 border-orbit-bg bg-orbit-accent text-white flex items-center justify-center font-bold text-xs" title={u.name}>
                     {u.name[0]}
                   </div>
@@ -104,7 +60,7 @@ export default function ProjectDetail() {
              </div>
              <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
                 <span className="flex items-center gap-1.5"><CalendarIcon className="w-4 h-4" /> Due {project.deadline ? format(new Date(project.deadline), "MMM d, yyyy") : "TBD"}</span>
-                <span className="flex items-center gap-1.5"><Info className="w-4 h-4" /> {tasks.length} Tasks</span>
+                <span className="flex items-center gap-1.5"><Info className="w-4 h-4" /> {projectTasks.length} Tasks</span>
              </div>
           </div>
         </div>
@@ -167,14 +123,14 @@ export default function ProjectDetail() {
                <div className="flex items-center gap-2">
                  <h3 className="font-bold text-white text-sm uppercase tracking-widest">{col}</h3>
                  <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded-full text-slate-500 font-bold">
-                   {tasks.filter(t => t.status === col).length}
+                   {projectTasks.filter(t => t.status === col).length}
                  </span>
                </div>
                <button className="text-slate-600 hover:text-white transition-colors"><MoreHorizontal className="w-4 h-4" /></button>
             </div>
 
             <div className="flex-1 space-y-4">
-               {tasks.filter(t => t.status === col).map((task) => (
+               {projectTasks.filter(t => t.status === col).map((task) => (
                  <motion.div
                     key={task.id}
                     layoutId={task.id}
@@ -207,7 +163,7 @@ export default function ProjectDetail() {
                         {COLUMNS.filter(c => c !== col).map(targetCol => (
                           <button 
                             key={targetCol}
-                            onClick={() => updateTaskStatus(task.id, targetCol)}
+                            onClick={() => handleUpdateStatus(task.id, targetCol)}
                             className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center hover:bg-orbit-accent transition-all text-slate-400 hover:text-white"
                             title={`Move to ${targetCol}`}
                           >
@@ -220,7 +176,7 @@ export default function ProjectDetail() {
                ))}
                
                {/* Empty State Spot */}
-               {tasks.filter(t => t.status === col).length === 0 && (
+               {projectTasks.filter(t => t.status === col).length === 0 && (
                  <div className="h-24 border-2 border-dashed border-white/5 rounded-2xl flex items-center justify-center">
                     <p className="text-xs text-slate-700 font-bold">DROP ZONE</p>
                  </div>
@@ -239,18 +195,19 @@ export default function ProjectDetail() {
              className="w-full max-w-lg glass p-8 rounded-3xl border border-white/10"
            >
               <h2 className="text-2xl font-bold text-white mb-6">Deploy New Task</h2>
-              <form onSubmit={async (e) => {
+              <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
                 const data = {
-                  name: formData.get("name"),
-                  description: formData.get("description"),
-                  urgency: formData.get("urgency"),
-                  projectId: id,
-                  dueDate: formData.get("dueDate"),
+                  name: formData.get("name") as string,
+                  description: formData.get("description") as string,
+                  urgency: formData.get("urgency") as string,
+                  projectId: id!,
+                  dueDate: formData.get("dueDate") as string,
+                  assignees: [user?.id || ""],
+                  status: "To Do"
                 };
-                await api.post("/tasks", data);
-                fetchProject();
+                addTask(data);
                 setIsTaskModalOpen(false);
               }} className="space-y-4">
                  <div>

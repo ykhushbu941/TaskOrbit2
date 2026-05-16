@@ -1,55 +1,33 @@
 import { useState, useEffect } from "react";
-import api from "../lib/api";
 import { motion, AnimatePresence } from "motion/react";
 import { Zap, TrendingUp, AlertCircle, Sparkles, MessageSquareCode, Circle, FolderKanban as FolderKanbanIcon, ShieldCheck } from "lucide-react";
 import { cn } from "../lib/utils";
 import OrbitView from "../components/OrbitView";
 import { useAuthStore } from "../store/useAuthStore";
+import { useOrbitStore } from "../store/useOrbitStore";
 import { format } from "date-fns";
+import { MOCK_ACTIVITY } from "../data/mockData";
 
 export default function Dashboard() {
   const { user } = useAuthStore();
-  const [projects, setProjects] = useState<any[]>([]);
-  const [activity, setActivity] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { projects, tasks } = useOrbitStore();
+  const [activity] = useState(MOCK_ACTIVITY);
   const [aiResponse, setAiResponse] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [projRes, actRes] = await Promise.all([
-        api.get("/projects"),
-        api.get("/activity")
-      ]);
-      setProjects(projRes.data);
-      setActivity(actRes.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const askAI = async (command: string) => {
     setAiLoading(true);
-    try {
-      const { data } = await api.post("/ai/command", { 
-        command, 
-        context: { projects, activity, user } 
-      });
-      setAiResponse(data.response);
-    } catch (err) {
-      setAiResponse("AI is currently offline. Please check your Gemini API key.");
-    } finally {
+    // Simulate AI thinking
+    setTimeout(() => {
+      const responses = [
+        "System analysis complete. Apollo-X Engine is currently at 75% capacity. Recommend allocating David Chen to help Sarah Miller with the Heat Shield stress tests.",
+        "Team velocity is high. However, Marcus Thorne has 3 high-urgency tasks due this week. Potential burnout risk detected in Project: Stellar Security.",
+        "Good morning Commander. Orbit synchronization is at 98%. All systems functional. Next priority: Ion Thruster Optimization review.",
+      ];
+      setAiResponse(responses[Math.floor(Math.random() * responses.length)]);
       setAiLoading(false);
-    }
+    }, 1500);
   };
-
-  if (loading) return <div className="flex items-center justify-center h-full"><div className="w-8 h-8 border-2 border-orbit-accent border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
     <div className="space-y-8 pb-12">

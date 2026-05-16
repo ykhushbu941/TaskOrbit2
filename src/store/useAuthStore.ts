@@ -1,13 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { MOCK_USERS } from "../data/mockData";
 
 interface User {
   id: string;
-  email: string;
   name: string;
+  email: string;
   role: string;
   avatar?: string;
-  assignedProjectId?: string;
 }
 
 interface AuthState {
@@ -20,8 +20,8 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      user: null,
-      token: null,
+      user: MOCK_USERS[0], // Pre-authenticated as Khushbu
+      token: "mock-proto-token",
       setAuth: (user, token) => set({ user, token }),
       logout: () => set({ user: null, token: null }),
     }),
