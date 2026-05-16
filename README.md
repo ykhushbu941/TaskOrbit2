@@ -5,6 +5,13 @@ It combines intelligent productivity workflows, real-time collaboration, Orbit v
 
 ---
 
+# 🌐 Live Website
+
+🔗 Live Demo:  
+https://taskorbit2-production.up.railway.app
+
+---
+
 # 🌌 Features
 
 ## ✨ Core Features
@@ -289,11 +296,12 @@ You can deploy the frontend easily on:
 
 - Vercel
 - Netlify
-- GitHub Pages
+- Railway
 - Render
+- GitHub Pages
 
-Recommended:
-- Vercel for best React + Vite support
+Current Deployment:
+https://taskorbit2-production.up.railway.app
 
 ---
 
