@@ -22,6 +22,8 @@ interface Project {
   status: string;
   deadline?: string;
   members: string[];
+  assetsFolder?: string;
+  specificationsLink?: string;
 }
 
 interface OrbitStore {
@@ -31,7 +33,7 @@ interface OrbitStore {
   setProjects: (projects: Project[]) => void;
   updateTaskStatus: (taskId: string, status: string) => void;
   addTask: (task: Omit<Task, "id">) => void;
-  addProject: (project: Omit<Project, "id">) => void;
+  addProject: (project: Omit<Project, "id" | "progress">) => void;
   deleteTask: (taskId: string) => void;
 }
 

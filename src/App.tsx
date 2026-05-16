@@ -10,6 +10,8 @@ import MyTasks from "./pages/MyTasks";
 import Analytics from "./pages/Analytics";
 import AdminPanel from "./pages/AdminPanel";
 import Settings from "./pages/Settings";
+import OrbitView from "./pages/OrbitView";
+import FocusPage from "./pages/FocusPage";
 import Layout from "./components/Layout";
 
 function ProtectedRoute({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) {
@@ -35,11 +37,12 @@ export default function App() {
               <Dashboard />
             </ProtectedRoute>
           } />
-          <Route path="/my-tasks" element={
+          <Route path="/tasks" element={
             <ProtectedRoute>
               <MyTasks />
             </ProtectedRoute>
           } />
+          <Route path="/my-tasks" element={<Navigate to="/tasks" replace />} />
           <Route path="/projects" element={
             <ProtectedRoute>
               <Projects />
@@ -48,6 +51,11 @@ export default function App() {
           <Route path="/projects/:id" element={
             <ProtectedRoute>
               <ProjectDetail />
+            </ProtectedRoute>
+          } />
+          <Route path="/orbit" element={
+            <ProtectedRoute>
+              <OrbitView />
             </ProtectedRoute>
           } />
           <Route path="/analytics" element={
@@ -64,6 +72,11 @@ export default function App() {
             <ProtectedRoute>
               <Settings />
             </ProtectedRoute>
+          } />
+          <Route path="/focus" element={
+             <ProtectedRoute>
+                <FocusPage />
+             </ProtectedRoute>
           } />
         </Route>
       </Routes>

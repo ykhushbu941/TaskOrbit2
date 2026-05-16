@@ -1,110 +1,104 @@
 import { motion } from "motion/react";
-import { Zap } from "lucide-react";
+import { Zap, Target, Orbit } from "lucide-react";
 import { cn } from "../lib/utils";
-import { useOrbitStore } from "../store/useOrbitStore";
 
-export default function OrbitView() {
-  const { projects, tasks } = useOrbitStore();
-  
+interface Task {
+  id: string;
+  name: string;
+  status: string;
+  urgency: string;
+  dueDate: string;
+}
+
+interface OrbitViewProps {
+  tasks: Task[];
+  interactive?: boolean;
+}
+
+export default function OrbitView({ tasks, interactive = true }: OrbitViewProps) {
+  const getUrgencyGlow = (urgency: string) => {
+    switch (urgency) {
+      case "Critical": return "shadow-[0_0_40px_rgba(244,63,94,0.4)] border-rose-500 bg-rose-500";
+      case "High": return "shadow-[0_0_30px_rgba(249,115,22,0.3)] border-orange-500 bg-orange-500";
+      case "Medium": return "shadow-[0_0_20px_rgba(99,102,241,0.2)] border-orbit-accent bg-orbit-accent";
+      default: return "border-slate-700 bg-slate-800 opacity-60";
+    }
+  };
+
   return (
-    <div className="relative w-full h-full flex items-center justify-center">
-      {/* Central Sun */}
-      <div className="relative z-10">
-        <motion.div
-          animate={{ 
-            scale: [1, 1.1, 1],
-            rotate: 360 
-          }}
-          transition={{ 
-             duration: 20, 
-            repeat: Infinity, 
-            ease: "linear" 
-          }}
-          className="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center orbit-glow-sun relative border-4 border-black"
-        >
-          <div className="w-6 h-6 border-2 border-white rounded-full" />
-          {/* Corona Effect */}
-          <div className="absolute inset-0 rounded-full bg-indigo-500/40 blur-2xl animate-pulse -z-10" />
-        </motion.div>
-      </div>
-
-      {/* Orbital Layers */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        {/* Constant Rings */}
-        {[100, 180, 260, 340].map((radius, i) => (
+    <div className="w-full h-full relative overflow-hidden flex items-center justify-center">
+      {/* Stellar Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.05)_0%,transparent_70%)]" />
+        {[...Array(30)].map((_, i) => (
           <div 
-            key={radius} 
-            className="absolute border border-white/[0.03] rounded-full" 
-            style={{ width: radius * 2, height: radius * 2 }} 
+            key={i} 
+            className="absolute w-px h-px bg-white rounded-full opacity-20"
+            style={{ 
+              top: `${Math.random() * 100}%`, 
+              left: `${Math.random() * 100}%`,
+              animation: `pulse ${2 + Math.random() * 4}s infinite`
+            }}
           />
         ))}
       </div>
 
-      {/* Project Planets */}
-      {projects.map((project, index) => {
-        const projectTasks = tasks.filter(t => t.projectId === project.id);
-        // Higher progress = closer to center (100 is min radius, 0 is max)
-        const radius = 340 - (project.progress / 100) * 240;
-        // Workload density (more tasks = slower/heavier orbit or more moons)
-        const duration = 25 + (projectTasks.length * 2);
-        const size = 30 + (projectTasks.length * 2);
-        
+      {/* The Core */}
+      <div className="relative z-10 w-32 h-32 md:w-48 md:h-48 rounded-full border-4 border-white/10 flex items-center justify-center orbit-glow-sun animate-[pulse_4s_infinite]">
+         <div className="text-center group">
+            <Orbit className="w-8 h-8 md:w-12 md:h-12 text-white mb-2 group-hover:rotate-180 transition-transform duration-1000" />
+            <p className="text-[8px] md:text-[10px] font-black tracking-widest text-white uppercase italic">Command Core</p>
+         </div>
+
+         {/* Orbit Lines */}
+         <div className="absolute inset-[-30px] md:inset-[-40px] border border-white/5 rounded-full" />
+         <div className="absolute inset-[-90px] md:inset-[-120px] border border-white/5 rounded-full" />
+         <div className="absolute inset-[-180px] md:inset-[-240px] border border-white/5 rounded-full" />
+      </div>
+
+      {/* Rotating Task Nodes */}
+      {tasks.slice(0, 8).map((task, index) => {
+        const orbitRadius = (window.innerWidth < 768 ? 80 : 150) + (index % 3) * (window.innerWidth < 768 ? 40 : 80);
+        const rotationSpeed = 30 + index * 10;
+        const startAngle = (index * (360 / Math.min(tasks.length, 8)));
+
         return (
           <motion.div
-            key={project.id}
-            className="absolute flex items-center justify-center"
-            style={{ width: radius * 2, height: radius * 2 }}
-            animate={{ rotate: 360 }}
-            transition={{ duration, repeat: Infinity, ease: "linear", delay: index * -5 }}
+            key={task.id}
+            className="absolute pointer-events-none"
+            animate={{ rotate: [startAngle, startAngle + 360] }}
+            transition={{ duration: rotationSpeed, repeat: Infinity, ease: "linear" }}
+            style={{ width: `${orbitRadius * 2}px`, height: `${orbitRadius * 2}px` }}
           >
-            <div className="absolute top-0 flex flex-col items-center group pointer-events-auto cursor-pointer">
-              {/* Planet */}
-              <motion.div 
-                whileHover={{ scale: 1.2 }}
-                className={cn(
-                  "relative rounded-full shadow-lg shadow-black/50 border border-white/20 transition-all",
-                  "flex items-center justify-center overflow-hidden"
-                )}
-                style={{ 
-                  width: size, 
-                  height: size, 
-                  backgroundColor: project.color,
-                  boxShadow: `0 0 20px ${project.color}40`
-                }}
-              >
-                {/* Surface texture/gradient */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-black/40 to-transparent" />
-                <span className="text-[10px] font-bold text-white z-10">{project.progress}%</span>
-                
-                {/* Individual Task Moons */}
-                {projectTasks.slice(0, 5).map((task: any, i: number) => (
-                   <motion.div
-                      key={task.id}
-                      className="absolute w-1 h-1 rounded-full bg-white opacity-60"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 5 + i, repeat: Infinity, ease: "linear" }}
-                      style={{ originY: 10 + i * 2 }}
-                   />
-                ))}
-              </motion.div>
-
-              {/* Label */}
-              <div className="absolute -bottom-10 opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100 flex flex-col items-center whitespace-nowrap z-50">
-                <span className="bg-[#111] backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[10px] font-bold text-white uppercase tracking-widest">
-                  {project.name}
-                </span>
-                <div className="w-0.5 h-3 bg-white/20" />
-              </div>
+            <div 
+              className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-auto"
+              style={{ transform: "translateX(50%)" }}
+            >
+               <motion.div 
+                 whileHover={interactive ? { scale: 1.2 } : {}}
+                 className={cn(
+                   "w-6 h-6 md:w-10 md:h-10 rounded-xl md:rounded-2xl border-2 flex items-center justify-center cursor-default group relative",
+                   getUrgencyGlow(task.urgency)
+                 )}
+               >
+                  {task.urgency === "Critical" ? <Zap className="w-3 h-3 md:w-4 md:h-4 text-white" /> : <Target className="w-3 h-3 md:w-4 md:h-4 text-white" />}
+                  
+                  {/* Tooltip Card */}
+                  {interactive && (
+                    <div className="absolute left-full ml-4 opacity-0 group-hover:opacity-100 transition-all pointer-events-none w-48 bg-[#111]/95 backdrop-blur-xl border border-white/10 p-4 rounded-2xl shadow-2xl z-50">
+                       <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">{task.urgency} Node</p>
+                       <p className="text-sm font-bold text-white mb-2">{task.name}</p>
+                       <div className="flex justify-between items-center text-[10px]">
+                          <span className="text-slate-500 font-black uppercase tracking-tighter">{task.status}</span>
+                          <span className="text-orbit-accent font-black uppercase">{task.dueDate}</span>
+                       </div>
+                    </div>
+                  )}
+               </motion.div>
             </div>
           </motion.div>
         );
       })}
-
-      {projects.length === 0 && (
-         <div className="absolute z-20 text-center opacity-30">
-            <p className="text-sm font-medium text-slate-400">No active projects orbiting.</p>
-         </div>
-      )}
     </div>
   );
 }

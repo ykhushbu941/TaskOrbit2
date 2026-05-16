@@ -9,15 +9,25 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("demo@taskorbit.com");
+  const [password, setPassword] = useState("TaskOrbit123");
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setLoading(true);
+    
     // Simulate auth delay
     setTimeout(() => {
-      setAuth(MOCK_USERS[0], "mock-token");
+      const user = MOCK_USERS.find(u => u.email === email) || MOCK_USERS[1];
+      setAuth(user, "mock-session-token-" + Date.now());
       navigate("/dashboard");
-    }, 1500);
+    }, 1200);
+  };
+
+  const handleDemoLogin = () => {
+    setEmail("demo@taskorbit.com");
+    setPassword("TaskOrbit123");
+    handleLogin();
   };
 
   return (
@@ -40,10 +50,14 @@ export default function LoginPage() {
              <span className="text-3xl font-bold tracking-tighter text-white uppercase italic">Task<span className="text-orbit-accent">Orbit</span></span>
           </Link>
           <h1 className="text-2xl font-bold text-white mb-2">Access Control</h1>
-          <p className="text-slate-500 text-sm">Enter mission credentials to access the terminal.</p>
+          <p className="text-slate-500 text-sm font-medium">Enter mission credentials to access the terminal.</p>
         </div>
 
-        <div className="bg-white/5 border border-white/10 p-8 rounded-[32px] backdrop-blur-xl shadow-2xl">
+        <div className="bg-white/5 border border-white/10 p-8 rounded-[32px] backdrop-blur-xl shadow-2xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-opacity">
+            <Zap className="w-12 h-12 text-orbit-accent rotate-12" />
+          </div>
+
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] ml-1">Personnel Email</label>
@@ -51,8 +65,9 @@ export default function LoginPage() {
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input 
                   type="email" 
-                  defaultValue="ykhushbu941@gmail.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-12 py-4 outline-none focus:border-orbit-accent text-white placeholder:text-slate-700 transition-all"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-12 py-4 outline-none focus:border-orbit-accent text-white placeholder:text-slate-700 transition-all font-medium"
                   placeholder="commander@taskorbit.io"
                 />
               </div>
@@ -64,8 +79,9 @@ export default function LoginPage() {
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input 
                   type="password" 
-                  defaultValue="password123"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-12 py-4 outline-none focus:border-orbit-accent text-white placeholder:text-slate-700 transition-all"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-12 py-4 outline-none focus:border-orbit-accent text-white placeholder:text-slate-700 transition-all font-medium"
                   placeholder="••••••••••••"
                 />
               </div>
@@ -74,7 +90,7 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full py-4 rounded-2xl bg-white text-black font-black text-lg hover:bg-slate-200 transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
+              className="w-full py-4 rounded-2xl bg-white text-black font-black text-lg hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
             >
               {loading ? (
                 <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin" />
@@ -84,12 +100,19 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-white/5 space-y-6">
+          <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
+             <button 
+               onClick={handleDemoLogin}
+               className="w-full py-4 rounded-2xl bg-gradient-to-r from-orbit-accent to-orbit-purple text-white font-black text-sm hover:opacity-90 transition-all flex items-center justify-center gap-3 orbit-glow-blue shadow-lg shadow-orbit-accent/20"
+             >
+                <Zap className="w-4 h-4 fill-white animate-pulse" /> Try Demo Account
+             </button>
+             
              <button className="w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-bold text-sm hover:bg-white/10 transition-all flex items-center justify-center gap-3">
                 <Github className="w-4 h-4" /> Continue with NeuralNet
              </button>
              
-             <p className="text-center text-xs text-slate-500">
+             <p className="text-center text-xs text-slate-500 font-medium">
                New recruit? <Link to="/register" className="text-orbit-accent font-bold hover:underline">Apply for Command</Link>
              </p>
           </div>
