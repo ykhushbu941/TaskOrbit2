@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id                String           @id @default(uuid())
+  email             String           @unique
+  password          String
+  name              String
+  role              String           @default("MEMBER") // ADMIN, MEMBER
+  avatar            String?
+  assignedProjectId String?
+  assignedProject   Project?         @relation(fields: [assignedProjectId], references: [id])
+  tasks             TaskAssignment[]
+  activityLogs      ActivityLog[]
+  messages          Message[]
+  notifications     Notification[]
+}
+
+model Project {
+  id                 String        @id @default(uuid())
+  name               String
+  description        String?
+  startDate          DateTime      @default(now())
+  deadline           DateTime?
+  status             String        @default("Active")
+  progress           Int           @default(0)
+  color              String        @default("#6366f1")
+  specificationsLink String?
+  assetsFolder       String?
+  tasks              Task[]
+  activityLogs       ActivityLog[]
+  users              User[]
+}
+
+model Task {
+  id          String           @id @default(uuid())
+  name        String
+  description String?
+  urgency     String           @default("Medium") // Low, Medium, High, Critical
+  status      String           @default("To Do") // To Do, In Progress, In Review, Done
+  dueDate     DateTime?
+  projectId   String
+  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignments TaskAssignment[]
+}
+
+model TaskAssignment {
+  userId String
+  taskId String
+  user   User   @relation(fields: [userId], references: [id])
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@id([userId, taskId])
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  userId     String
+  userName   String
+  action     String
+  targetName String
+  projectId  String?
+  timestamp  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+  project    Project? @relation(fields: [projectId], references: [id])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  userId    String
+  userName  String
+  timestamp DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  timestamp DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
